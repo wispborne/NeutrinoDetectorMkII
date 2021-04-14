@@ -7,4 +7,4 @@ MOD_FOLDER_NAME=Neutrino-Detector-MkII
 
 
 chmod +x ./zipMod.sh
-./zipMod.sh "$MOD_FOLDER_NAME"
+sh ./zipMod.sh "./../.." "$MOD_FOLDER_NAME"

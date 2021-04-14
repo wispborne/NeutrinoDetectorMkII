@@ -14,9 +14,11 @@ class LifecyclePlugin : BaseModPlugin() {
     override fun onGameLoad(newGame: Boolean) {
         super.onGameLoad(newGame)
         val neutDetectMk2Id = "neutrino_detector_mkII"
+        val playerAbilities =
+            Global.getSector().characterData.abilities + Global.getSector().playerPerson.stats.grantedAbilityIds
 
-        if (Abilities.GRAVITIC_SCAN in Global.getSector().characterData.abilities
-            && neutDetectMk2Id !in Global.getSector().characterData.abilities
+        if (Abilities.GRAVITIC_SCAN in playerAbilities
+            && neutDetectMk2Id !in playerAbilities
         ) {
             Global.getSector().characterData.addAbility(neutDetectMk2Id)
         }

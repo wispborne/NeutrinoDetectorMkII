@@ -45,4 +45,4 @@ jobs:
           body_path: changes.txt
           draft: false
           prerelease: false
-          files: "./artifacts"
+          files: "./.github/workflows/artifacts"

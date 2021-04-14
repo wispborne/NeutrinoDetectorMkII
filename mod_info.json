@@ -4,7 +4,7 @@
     "name": "Neutrino Detector Mk.II",
     "author": "Wisp",
     "utility": "false",
-    "version": { "major":"1", "minor": "0", "patch": "0" },
+    "version": { "major":"1", "minor": "0", "patch": "2" },
     "description": "The Neutrino Detector Mk.II uses slightly more power but has no false positives",
     "gameVersion": "0.95a-RC12",
     "jars":["jars/NeutrinoDetectorMkII.jar"],

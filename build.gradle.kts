@@ -17,7 +17,7 @@ object Variables {
     val modPlugin = "org.wisp.neutrino_detector_mkii.LifecyclePlugin"
     val isUtilityMod = false
     val masterVersionFile = "https://raw.githubusercontent.com/githubname/githubrepo/master/$modId.version"
-    val modThreadId = "00000"
+    val modThreadId = "21140"
 }
 // Scroll down and change the "dependencies" part of mod_info.json, if needed
 // LazyLib is needed to use Kotlin, as it provides the Kotlin Runtime

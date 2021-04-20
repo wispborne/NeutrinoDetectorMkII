@@ -9,6 +9,8 @@ import com.fs.starfarer.api.impl.campaign.abilities.BaseToggleAbility
 import com.fs.starfarer.api.impl.campaign.ids.Commodities
 import com.fs.starfarer.api.ui.TooltipMakerAPI
 import com.fs.starfarer.api.util.Misc
+import org.lazywizard.lazylib.ext.json.getFloat
+import org.lazywizard.lazylib.ext.logging.e
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 import java.util.*
@@ -21,8 +23,34 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         val COMMODITY_ID: String = Commodities.VOLATILES
 
         // Wisp: Increased from 1.0 to 1.2
-        const val COMMODITY_PER_DAY = 1.2f
+        @Deprecated("Use a variable loaded from settings, this is kept for backwards compat")
+        const val COMMODITY_PER_DAY = 1.2
         const val DETECTABILITY_PERCENT = 50f
+        var commoditiesPerDay: Float? = null
+    }
+
+    init {
+        if (commoditiesPerDay == null) {
+            loadSettings()
+        }
+    }
+
+    override fun readResolve() {
+        super.readResolve()
+        loadSettings()
+    }
+
+    private fun loadSettings() {
+        kotlin.runCatching {
+            commoditiesPerDay =
+                Global.getSettings().getMergedJSONForMod("data/config/modSettings.json", "wisp_NeutrinoDetectorMkII")
+                    .getJSONObject("NeutrinoDetectorMkII")
+                    .getFloat("volatilesPerDay")
+        }
+            .onFailure {
+                Global.getLogger(NeutrinoDetectorMkIIAbility::class.java).e({ it.message ?: "" }, it)
+            }
+            .getOrThrow()
     }
 
     override fun getActivationText(): String? {
@@ -63,20 +91,21 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
                     "Average sources produce periodic bursts. Low-emission sources produce occasional bursts.", pad
         )
         tooltip.addPara(
-            "The Mk.II design improves upon the original by consuming marginally more power to detect and remove false positives.", pad
+            "The Mk.II design improves upon the original by consuming marginally more power to detect and remove false positives.",
+            pad
         )
 
         if (COMMODITY_ID != null) {
             var unit = "unit"
 
-            if (COMMODITY_PER_DAY != 1f) unit = "units"
+            if (commoditiesPerDay != 1f) unit = "units"
             val spec = commodity
             unit += " of " + spec.name.toLowerCase()
             tooltip.addPara(
                 "Increases the range at which the fleet can be detected by %s and consumes %s $unit per day.",
                 pad, highlight,
                 "" + DETECTABILITY_PERCENT.toInt() + "%",
-                "" + Misc.getRoundedValueMaxOneAfterDecimal(COMMODITY_PER_DAY)
+                "" + Misc.getRoundedValueMaxOneAfterDecimal(commoditiesPerDay!!)
             )
         } else {
             tooltip.addPara(
@@ -126,7 +155,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
 
         data!!.advance(days)
         if (COMMODITY_ID != null) {
-            val cost = days * COMMODITY_PER_DAY
+            val cost = days * commoditiesPerDay!!
             if (fleet.cargo.getCommodityQuantity(COMMODITY_ID) > 0 || Global.getSettings().isDevMode) {
                 fleet.cargo.removeCommodity(COMMODITY_ID, cost)
             } else {

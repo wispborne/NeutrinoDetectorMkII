@@ -22,7 +22,6 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
     companion object {
         val COMMODITY_ID: String = Commodities.VOLATILES
 
-        // Wisp: Increased from 1.0 to 1.2
         @Deprecated("Use a variable loaded from settings, this is kept for backwards compat")
         const val COMMODITY_PER_DAY = 1.2
         const val DETECTABILITY_PERCENT = 50f
@@ -33,11 +32,6 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         if (commoditiesPerDay == null) {
             loadSettings()
         }
-    }
-
-    override fun readResolve() {
-        super.readResolve()
-        loadSettings()
     }
 
     private fun loadSettings() {

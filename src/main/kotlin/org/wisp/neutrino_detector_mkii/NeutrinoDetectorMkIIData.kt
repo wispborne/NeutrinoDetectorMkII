@@ -6,6 +6,9 @@ import com.fs.starfarer.api.impl.campaign.ids.Tags
 import com.fs.starfarer.api.util.IntervalUtil
 import com.fs.starfarer.api.util.Misc
 import org.lwjgl.util.vector.Vector2f
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
 
 /**
  * Source: com.fs.starfarer.api.impl.campaign.abilities.GraviticScanData
@@ -86,12 +89,12 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
             //b *= b;
             val arc = ping.arc
             val mid = ping.angle
-            val half = Math.ceil((0.5f * arc / incr).toDouble()).toFloat()
+            val half = ceil((0.5f * arc / incr).toDouble()).toFloat()
             var i = -half
             while (i <= half) {
                 val curr = mid + incr * i
                 val index = getIndex(curr)
-                var intensity = 1f - Math.abs(i / half)
+                var intensity = 1f - abs(i / half)
                 intensity *= intensity
                 val value = ping.grav * intensity * b
                 data!![index] += value
@@ -109,7 +112,7 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
     fun getIndex(angle: Float): Int {
         var angle = angle
         angle = Misc.normalizeAngle(angle)
-        return Math.floor((resolution * angle / 360f).toDouble()).toInt()
+        return floor((resolution * angle / 360f).toDouble()).toInt()
     }
 
     private var initialCount = 0
@@ -153,7 +156,7 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
             }
             initialCount = special.size
         }
-        val batch = Math.ceil((initialCount / 1f).toDouble()).toInt()
+        val batch = ceil((initialCount / 1f).toDouble()).toInt()
 
         for (i in 0 until batch) {
             if (special.isEmpty()) break

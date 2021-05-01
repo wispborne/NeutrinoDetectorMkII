@@ -5,18 +5,18 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 object Variables {
     val starsectorDirectory = "C:/Program Files (x86)/Fractal Softworks/Starsector"
-    val modVersion = "1.1.0"
+    val modVersion = "1.2.0"
     val jarFileName = "NeutrinoDetectorMkII.jar"
 
     val modId = "wisp_NeutrinoDetectorMkII"
     val modName = "Neutrino Detector Mk.II"
     val author = "Wisp"
     val description = "The Neutrino Detector Mk.II uses slightly more power but has no false positives"
-    val gameVersion = "0.95a-RC12"
+    val gameVersion = "0.95a-RC15"
     val jars = arrayOf("jars/$jarFileName")
     val modPlugin = "org.wisp.neutrino_detector_mkii.LifecyclePlugin"
     val isUtilityMod = false
-    val masterVersionFile = "https://raw.githubusercontent.com/githubname/githubrepo/master/$modId.version"
+    val masterVersionFile = "https://raw.githubusercontent.com/davidwhitman/NeutrinoDetectorMkII/master/$modId.version"
     val modThreadId = "21140"
 }
 // Scroll down and change the "dependencies" part of mod_info.json, if needed

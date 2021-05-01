@@ -1,5 +1,9 @@
 # Changelog
 
+1.2.0 (2021-05-01) - Save Compatible
+- Bigger, more obvious spikes
+- Darker purple (easier to see on some light Unknown Skies backgrounds)
+
 1.1.0 (2021-04-20) - Save Compatible
 - Increased usage to 1.8 volatiles per day
 - It's still really good

@@ -9,27 +9,50 @@ import com.fs.starfarer.api.impl.campaign.abilities.BaseToggleAbility
 import com.fs.starfarer.api.impl.campaign.ids.Commodities
 import com.fs.starfarer.api.ui.TooltipMakerAPI
 import com.fs.starfarer.api.util.Misc
+import org.lazywizard.lazylib.ext.json.getFloat
+import org.lazywizard.lazylib.ext.logging.e
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 import java.util.*
+import kotlin.math.*
 
 /**
  * Source: com.fs.starfarer.api.impl.campaign.abilities.GraviticScanAbility
  */
 class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
     companion object {
-        val COMMODITY_ID: String = Commodities.VOLATILES
+        const val COMMODITY_ID: String = Commodities.VOLATILES
 
-        // Wisp: Increased from 1.0 to 1.2
-        const val COMMODITY_PER_DAY = 1.2f
+        @Deprecated("Wisp: Use a variable loaded from settings, this is kept for backwards compat")
+        const val COMMODITY_PER_DAY = 1.2
         const val DETECTABILITY_PERCENT = 50f
+        var commoditiesPerDay: Float? = null
+        private val color = Color(128, 2, 173, 255)
+    }
+
+    init {
+        if (commoditiesPerDay == null) {
+            loadSettings()
+        }
+    }
+
+    private fun loadSettings() {
+        kotlin.runCatching {
+            commoditiesPerDay =
+                Global.getSettings().getMergedJSONForMod("data/config/modSettings.json", "wisp_NeutrinoDetectorMkII")
+                    .getJSONObject("NeutrinoDetectorMkII")
+                    .getFloat("volatilesPerDay")
+        }
+            .onFailure {
+                Global.getLogger(NeutrinoDetectorMkIIAbility::class.java).e({ it.message ?: "" }, it)
+            }
+            .getOrThrow()
     }
 
     override fun getActivationText(): String? {
-        return if (COMMODITY_ID != null && fleet != null && fleet.cargo.getCommodityQuantity(
+        return if (fleet != null && fleet.cargo.getCommodityQuantity(
                 COMMODITY_ID
-            ) <= 0 &&
-            !Global.getSettings().isDevMode
+            ) <= 0 && !Global.getSettings().isDevMode
         ) null
         else "Neutrino detector Mk.II activated"
     }
@@ -63,28 +86,23 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
                     "Average sources produce periodic bursts. Low-emission sources produce occasional bursts.", pad
         )
         tooltip.addPara(
-            "The Mk.II design improves upon the original by consuming marginally more power to detect and remove false positives.", pad
+            "The Mk.II design improves upon the original by consuming marginally more power to detect and remove false positives.",
+            pad
         )
 
-        if (COMMODITY_ID != null) {
-            var unit = "unit"
+        var unit = "unit"
 
-            if (COMMODITY_PER_DAY != 1f) unit = "units"
-            val spec = commodity
-            unit += " of " + spec.name.toLowerCase()
-            tooltip.addPara(
-                "Increases the range at which the fleet can be detected by %s and consumes %s $unit per day.",
-                pad, highlight,
-                "" + DETECTABILITY_PERCENT.toInt() + "%",
-                "" + Misc.getRoundedValueMaxOneAfterDecimal(COMMODITY_PER_DAY)
-            )
-        } else {
-            tooltip.addPara(
-                "Increases the range at which the fleet can be detected by %s.",
-                pad, highlight,
-                "" + DETECTABILITY_PERCENT.toInt() + "%"
-            )
-        }
+        if (commoditiesPerDay != 1f) unit = "units"
+        val spec = commodity
+        unit += " of " + spec.name.toLowerCase()
+        tooltip.addPara(
+            "Increases the range at which the fleet can be detected by %s and consumes %s $unit per day (%s in cargo).",
+            pad,
+            highlight,
+            "" + DETECTABILITY_PERCENT.toInt() + "%",
+            "" + Misc.getRoundedValueMaxOneAfterDecimal(commoditiesPerDay!!),
+            Global.getSector().playerFleet.cargo.getCommodityQuantity(spec.id).toInt().toString()
+        )
 
         if (fleet != null && fleet.isInHyperspace) {
             tooltip.addPara("Can not function in hyperspace.", bad, pad)
@@ -125,18 +143,17 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         }
 
         data!!.advance(days)
-        if (COMMODITY_ID != null) {
-            val cost = days * COMMODITY_PER_DAY
-            if (fleet.cargo.getCommodityQuantity(COMMODITY_ID) > 0 || Global.getSettings().isDevMode) {
-                fleet.cargo.removeCommodity(COMMODITY_ID, cost)
-            } else {
-                fleet.addFloatingText(
-                    "Out of " + commodity.name.toLowerCase(),
-                    Misc.setAlpha(entity.indicatorColor, 255),
-                    0.5f
-                )
-                deactivate()
-            }
+        val cost = days * commoditiesPerDay!!
+
+        if (fleet.cargo.getCommodityQuantity(COMMODITY_ID) > 0 || Global.getSettings().isDevMode) {
+            fleet.cargo.removeCommodity(COMMODITY_ID, cost)
+        } else {
+            fleet.addFloatingText(
+                "Out of " + commodity.name.toLowerCase(),
+                Misc.setAlpha(entity.indicatorColor, 255),
+                0.5f
+            )
+            deactivate()
         }
 
         if (fleet.isInHyperspace) {
@@ -200,14 +217,14 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         //float pixelsPerSegment = 10f;
         val pixelsPerSegment = circ / 360f
         //float pixelsPerSegment = circ / 720;
-        val segments = Math.round(circ / pixelsPerSegment).toFloat()
+        val segments = (circ / pixelsPerSegment).roundToLong().toFloat()
 
 //		segments = 360;
 //		pixelsPerSegment = circ / segments;
         //pixelsPerSegment = 10f;
         val startRad = Math.toRadians(0.0).toFloat()
         val endRad = Math.toRadians(360.0).toFloat()
-        val spanRad = Math.abs(endRad - startRad)
+        val spanRad = abs(endRad - startRad)
         val anglePerSegment = spanRad / segments
         val loc = fleet.location
         val x = loc.x
@@ -237,12 +254,12 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         val imageHeight = texture!!.height
         var texPerSegment = pixelsPerSegment * texHeight / imageHeight * bandWidthInTexture / thickness
         texPerSegment *= 1f
-        val totalTex = Math.max(1f, Math.round(texPerSegment * segments).toFloat())
+        val totalTex = max(1f, (texPerSegment * segments).roundToLong().toFloat())
         texPerSegment = totalTex / segments
         val texWidth = texture!!.textureWidth
         val imageWidth = texture!!.width
         // Wisp: Purple color
-        val color = Color(185, 12, 247, 255)
+        val color = color
         //Color color = new Color(255,25,255,155);
         for (iter in 0..1) {
             if (iter == 0) {
@@ -260,24 +277,21 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
             //bandIndex = 1;
             val leftTX = bandIndex * texWidth * bandWidthInTexture / imageWidth
             val rightTX = (bandIndex + 1f) * texWidth * bandWidthInTexture / imageWidth - 0.001f
-            GL11.glBegin(GL11.GL_QUAD_STRIP)
+//            GL11.glBegin(GL11.GL_QUAD_STRIP)
             var i = 0f
             while (i < segments + 1) {
                 val segIndex = i % segments.toInt()
 
                 //float phaseAngleRad = (float) Math.toRadians(phaseAngle + segIndex * 10) + (segIndex * anglePerSegment * 10f);
-                var phaseAngleRad: Float
-                phaseAngleRad = if (iter == 0) {
+                val phaseAngleRad = if (iter == 0) {
                     Math.toRadians(phaseAngle.toDouble()).toFloat() + segIndex * anglePerSegment * 29f
                 } else { //if (iter == 1) {
                     Math.toRadians(-phaseAngle.toDouble()).toFloat() + segIndex * anglePerSegment * 17f
                 }
                 val angle = Math.toDegrees((segIndex * anglePerSegment).toDouble()).toFloat()
                 //if (iter == 1) angle += 180;
-                val pulseSin = Math.sin(phaseAngleRad.toDouble()).toFloat()
-                var pulseMax = thickness * 0.5f
-                pulseMax = thickness * 0.2f
-                pulseMax = 10f
+                val pulseSin = sin(phaseAngleRad.toDouble()).toFloat()
+                val pulseMax = 7f// vanilla 10f, wisp edited to have larger spikes
 
                 //pulseMax *= 0.25f + 0.75f * noiseLevel;
                 val pulseAmount = pulseSin * pulseMax
@@ -287,8 +301,8 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
 //				float thicknessMult = delegate.getAuroraThicknessMult(angle);
 //				float thicknessFlat = delegate.getAuroraThicknessFlat(angle);
                 val theta = anglePerSegment * segIndex
-                val cos = Math.cos(theta.toDouble()).toFloat()
-                val sin = Math.sin(theta.toDouble()).toFloat()
+                val cos = cos(theta.toDouble()).toFloat()
+                val sin = sin(theta.toDouble()).toFloat()
                 val rInner = radStart - pulseInner
                 //if (rInner < r * 0.9f) rInner = r * 0.9f;
 
@@ -300,7 +314,9 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
                 var grav = data!!.getDataAt(angle)
                 //if (grav > 500) System.out.println(grav);
                 //if (grav > 300) grav = 300;
-                if (grav > 750) grav = 750f
+                grav *= 3f // wisp edit, making spikes bigger
+                val maxSize = 1250f
+                if (grav > maxSize) grav = maxSize
                 grav *= 250f / 750f
                 grav *= level
                 //grav *= 0.5f;
@@ -312,7 +328,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
 //				rOuter -= grav * 3f;
                 //System.out.println(grav);
                 var alpha = alphaMult
-                alpha *= 0.25f + Math.min(grav / 100, 0.75f)
+                alpha *= 0.25f + (grav / 100).coerceAtMost(0.75f)
                 //alpha *= 0.75f;
 
 //
@@ -326,18 +342,21 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
                 val y1 = sin * rInner
                 var x2 = cos * rOuter
                 var y2 = sin * rOuter
-                x2 += (Math.cos(phaseAngleRad.toDouble()) * pixelsPerSegment * 0.33f).toFloat()
-                y2 += (Math.sin(phaseAngleRad.toDouble()) * pixelsPerSegment * 0.33f).toFloat()
+                x2 += (cos(phaseAngleRad.toDouble()) * pixelsPerSegment * 0.33f).toFloat()
+                y2 += (sin(phaseAngleRad.toDouble()) * pixelsPerSegment * 0.33f).toFloat()
+
+                GL11.glBegin(GL11.GL_QUAD_STRIP)
                 GL11.glColor4ub(
                     color.red.toByte(),
                     color.green.toByte(),
                     color.blue.toByte(),
-                    (color.alpha.toFloat() * alphaMult * alpha).toByte()
+                    (color.alpha.toFloat() * alphaMult * alpha).toInt().toByte()
                 )
                 GL11.glTexCoord2f(leftTX, texProgress)
                 GL11.glVertex2f(x1, y1)
                 GL11.glTexCoord2f(rightTX, texProgress)
                 GL11.glVertex2f(x2, y2)
+
                 texProgress += texPerSegment * 1f
                 i++
             }

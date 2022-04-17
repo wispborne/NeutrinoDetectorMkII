@@ -3,12 +3,16 @@ package org.wisp.neutrino_detector_mkii
 import com.fs.starfarer.api.campaign.*
 import com.fs.starfarer.api.impl.campaign.abilities.GraviticScanData.GSPing
 import com.fs.starfarer.api.impl.campaign.ids.Tags
+import com.fs.starfarer.api.impl.campaign.velfield.SlipstreamTerrainPlugin2
+import com.fs.starfarer.api.impl.campaign.velfield.SlipstreamTerrainPlugin2.SlipstreamSegment
 import com.fs.starfarer.api.util.IntervalUtil
 import com.fs.starfarer.api.util.Misc
 import org.lwjgl.util.vector.Vector2f
+import org.wisp.neutrino_detector_mkii.NeutrinoDetectorMkIIAbility.Companion.SLIPSTREAM_DETECTION_RANGE
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+
 
 /**
  * Source: com.fs.starfarer.api.impl.campaign.abilities.GraviticScanData
@@ -27,10 +31,10 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
     private val specialInterval = IntervalUtil(0.075f, 0.125f)
     fun advance(days: Float) {
         if (ability.fleet == null || ability.fleet.containingLocation == null) return
-        if (ability.fleet.isInHyperspace) {
-            data = null
-            return
-        }
+//        if (ability.fleet.isInHyperspace) {
+//            data = null
+//            return
+//        }
         val iter = pings.iterator()
         while (iter.hasNext()) {
             val ping = iter.next()
@@ -121,6 +125,7 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
     //private float totalForce;
     fun doSpecialPings() {
         val fleet = ability.fleet
+        if (fleet.isInHyperspace) return;
         val loc = fleet.location
         val location = fleet.containingLocation
         val neutrinoLowSkipProb = 0.8f
@@ -219,11 +224,64 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
         return 1f - 0.85f * range / max
     }
 
+    fun maintainSlipstreamPings() {
+        val fleet = ability.fleet
+        val loc = fleet.location
+        val location = fleet.containingLocation
+        val range = SLIPSTREAM_DETECTION_RANGE
+        if (Misc.isInsideSlipstream(fleet)) return
+        for (ter in location.terrainCopy) {
+            if (ter.plugin is SlipstreamTerrainPlugin2) {
+                val plugin = ter.plugin as SlipstreamTerrainPlugin2
+                if (plugin.containsEntity(fleet)) continue
+                val inRange: MutableList<SlipstreamSegment> = ArrayList<SlipstreamSegment>()
+                val near: List<SlipstreamSegment> = plugin.getSegmentsNear(loc, range)
+                var skip = 0
+                for (curr in near) {
+                    if (skip > 0) {
+                        skip--
+                        continue
+                    }
+                    if (curr.bMult <= 0) continue
+                    val dist = Misc.getDistance(loc, curr.loc)
+                    if (dist < range) {
+                        inRange.add(curr)
+                        skip = 5
+                    }
+                }
+                if (!inRange.isEmpty()) {
+                    for (curr in inRange) {
+                        val dist = Misc.getDistance(loc, curr.loc)
+                        var arc = Misc.computeAngleSpan(curr.width, dist)
+                        arc *= 2f
+                        if (arc > 150f) arc = 150f
+                        if (arc < 20) arc = 20f
+                        //arc += 30f;
+                        val angle = Misc.getAngleInDegrees(loc, curr.loc)
+                        var g = 500f
+                        g *= .1f
+                        g *= getRangeGMult(dist)
+                        val `in` = planetInterval.intervalDuration * 5f
+                        val ping = GSPing(angle, arc, g, `in`, `in`)
+                        pings.add(ping)
+                    }
+                }
+            }
+        }
+    }
+
     fun maintainHighSourcePings() {
         val fleet = ability.fleet
         val loc = fleet.location
         val location = fleet.containingLocation
-        val netForce = Vector2f()
+
+        maintainSlipstreamPings();
+
+        if (fleet.isInHyperspace) {
+            return;
+        }
+
+//        val netForce = Vector2f()
         val all: MutableList<SectorEntityToken> = ArrayList(location.planets)
         for (`object` in location.getEntities(CustomCampaignEntityAPI::class.java)) {
             if (`object` is SectorEntityToken) {
@@ -270,9 +328,9 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
                 g *= 2f
             }
             g *= getRangeGMult(dist)
-            val dir = Misc.getUnitVectorAtDegreeAngle(angle)
-            dir.scale(g)
-            Vector2f.add(netForce, dir, netForce)
+//            val dir = Misc.getUnitVectorAtDegreeAngle(angle)
+//            dir.scale(g)
+//            Vector2f.add(netForce, dir, netForce)
             //			if (Misc.isInArc(90, 30, angle)) {
 //				System.out.println("fwefewf");
 //			}

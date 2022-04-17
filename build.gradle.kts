@@ -4,15 +4,15 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 // VARIABLES TO CHANGE
 
 object Variables {
-    val starsectorDirectory = "C:/Program Files (x86)/Fractal Softworks/Starsector"
-    val modVersion = "1.2.0"
+    val starsectorDirectory = "C:/Program Files (x86)/Fractal Softworks/Starsector1.95.1-RC6"
+    val modVersion = "1.3.0"
     val jarFileName = "NeutrinoDetectorMkII.jar"
 
     val modId = "wisp_NeutrinoDetectorMkII"
     val modName = "Neutrino Detector Mk.II"
     val author = "Wisp"
     val description = "The Neutrino Detector Mk.II uses slightly more power but has no false positives"
-    val gameVersion = "0.95a-RC15"
+    val gameVersion = "0.95.1a-RC6"
     val jars = arrayOf("jars/$jarFileName")
     val modPlugin = "org.wisp.neutrino_detector_mkii.LifecyclePlugin"
     val isUtilityMod = false
@@ -28,7 +28,7 @@ val starsectorCoreDirectory = "${Variables.starsectorDirectory}/starsector-core"
 val starsectorModDirectory = "${Variables.starsectorDirectory}/mods"
 
 plugins {
-    kotlin("jvm") version "1.3.60"
+    kotlin("jvm") version "1.5.31"
     java
 }
 
@@ -36,11 +36,11 @@ version = Variables.modVersion
 
 repositories {
     maven(url = uri("$projectDir/libs"))
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
-    val kotlinVersionInLazyLib = "1.4.21"
+    val kotlinVersionInLazyLib = "1.5.31"
 
     // Get kotlin sdk from LazyLib during runtime, only use it here during compile time
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersionInLazyLib")
@@ -49,11 +49,12 @@ dependencies {
     compileOnly(fileTree("$starsectorModDirectory/LazyLib/jars") { include("*.jar") })
     //compileOnly(fileTree("$starsectorModDirectory/Console Commands/jars") { include("*.jar") })
 
+    // This grabs local files from the /libs folder, see `repositories` block.
+    implementation("starfarer:starfarer-api:1.0.0")
+
     // Starsector jars and dependencies
     implementation(fileTree(starsectorCoreDirectory) {
         include(
-            "starfarer.api.jar",
-            "starfarer.api-sources.jar",
             "starfarer_obf.jar",
             "fs.common_obf.jar",
             "json.jar",
@@ -73,7 +74,7 @@ tasks {
         archiveFileName.set(Variables.jarFileName)
     }
 
-    register("debug-starsector", Exec::class) {
+    register<Exec>("debug-starsector") {
         println("Starting debugger for Starsector...")
         workingDir = file(starsectorCoreDirectory)
 
@@ -85,7 +86,7 @@ tasks {
         }
     }
 
-    register("run-starsector", Exec::class) {
+    register<Exec>("run-starsector") {
         println("Starting Starsector...")
         workingDir = file(starsectorCoreDirectory)
 
@@ -97,7 +98,7 @@ tasks {
     }
 
     register("create-metadata-files") {
-        val version = Variables.modVersion.split(".").let { javaslang.Tuple3(it[0], it[1], it[2]) }
+        val versionObject = Variables.modVersion.split(".").let { javaslang.Tuple3(it[0], it[1], it[2]) }
 
         File(projectDir, "mod_info.json")
             .writeText(
@@ -108,7 +109,11 @@ tasks {
                         "name": "${Variables.modName}",
                         "author": "${Variables.author}",
                         "utility": "${Variables.isUtilityMod}",
-                        "version": { "major":"${version._1}", "minor": "${version._2}", "patch": "${version._3}" },
+                        "version": "${
+                    listOf(versionObject._1, versionObject._2, versionObject._3).joinToString(
+                        separator = "."
+                    )
+                }",
                         "description": "${Variables.description}",
                         "gameVersion": "${Variables.gameVersion}",
                         "jars":[${Variables.jars.joinToString() { "\"$it\"" }}],
@@ -134,9 +139,9 @@ tasks {
                         "modThreadId":${Variables.modThreadId},
                         "modVersion":
                         {
-                            "major":${version._1},
-                            "minor":${version._2},
-                            "patch":${version._3}
+                            "major":${versionObject._1},
+                            "minor":${versionObject._2},
+                            "patch":${versionObject._3}
                         }
                     }
                 """.trimIndent()

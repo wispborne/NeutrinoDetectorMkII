@@ -7,6 +7,7 @@ import com.fs.starfarer.api.combat.ViewportAPI
 import com.fs.starfarer.api.graphics.SpriteAPI
 import com.fs.starfarer.api.impl.campaign.abilities.BaseToggleAbility
 import com.fs.starfarer.api.impl.campaign.ids.Commodities
+import com.fs.starfarer.api.ui.Alignment
 import com.fs.starfarer.api.ui.TooltipMakerAPI
 import com.fs.starfarer.api.util.Misc
 import org.lazywizard.lazylib.ext.json.getFloat
@@ -16,11 +17,13 @@ import java.awt.Color
 import java.util.*
 import kotlin.math.*
 
+
 /**
  * Source: com.fs.starfarer.api.impl.campaign.abilities.GraviticScanAbility
  */
 class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
     companion object {
+        const val SLIPSTREAM_DETECTION_RANGE = 30000f
         const val COMMODITY_ID: String = Commodities.VOLATILES
 
         @Deprecated("Wisp: Use a variable loaded from settings, this is kept for backwards compat")
@@ -81,6 +84,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
             "Reconfigures the fleet's drive field to act as a neutrino detector, " +
                     "allowing detection of human-made artifacts - and occasionally fleets - at extreme ranges. ", pad
         )
+        tooltip.addSectionHeading("Normal space", Alignment.MID, pad);
         tooltip.addPara(
             "High-emission sources such as stars, planets, jump-points, or space stations produce constant streams. " +
                     "Average sources produce periodic bursts. Low-emission sources produce occasional bursts.", pad
@@ -104,11 +108,23 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
             Global.getSector().playerFleet.cargo.getCommodityQuantity(spec.id).toInt().toString()
         )
 
-        if (fleet != null && fleet.isInHyperspace) {
-            tooltip.addPara("Can not function in hyperspace.", bad, pad)
-        } else {
-            tooltip.addPara("Can not function in hyperspace.", pad)
+        tooltip.addSectionHeading("Hyperspace", Alignment.MID, pad)
+        tooltip.addPara(
+            "Reliably detects the presence of slipstreams out to a range of %s light-years. "
+                    + "The background noise levels are such that it is unable to detect any other neutrino sources. "
+                    + "When the fleet is traversing a slipstream, the detector is overwhelmed and shuts down.",
+            pad,
+            highlight,
+            "" + (SLIPSTREAM_DETECTION_RANGE / Misc.getUnitsPerLightYear()).roundToInt()
+        )
+        if (Misc.isInsideSlipstream(fleet)) {
+            tooltip.addPara("Cannot activate while inside slipstream.", bad, pad)
         }
+//        if (fleet != null && fleet.isInHyperspace) {
+//            tooltip.addPara("Can not function in hyperspace.", bad, pad)
+//        } else {
+//            tooltip.addPara("Can not function in hyperspace.", pad)
+//        }
 
         //tooltip.addPara("Disables the transponder when activated.", pad);
         addIncompatibleToTooltip(tooltip, expanded)
@@ -156,7 +172,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
             deactivate()
         }
 
-        if (fleet.isInHyperspace) {
+        if (Misc.isInsideSlipstream(fleet)) {
             deactivate()
         }
     }
@@ -166,7 +182,8 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
 
     override fun isUsable(): Boolean {
         val fleet = fleet ?: return false
-        return isActive || !fleet.isInHyperspace
+        return !Misc.isInsideSlipstream(fleet);
+        //return isActive() || !fleet.isInHyperspace();
     }
 
     override fun deactivateImpl() {

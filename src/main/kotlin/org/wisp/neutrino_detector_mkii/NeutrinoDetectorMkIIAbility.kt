@@ -23,6 +23,7 @@ import kotlin.math.*
  */
 class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
     companion object {
+        // 15 LY, increased from vanilla 10 LY
         const val SLIPSTREAM_DETECTION_RANGE = 30000f
         const val COMMODITY_ID: String = Commodities.VOLATILES
 

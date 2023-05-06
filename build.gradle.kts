@@ -18,6 +18,7 @@ object Variables {
     val isUtilityMod = false
     val masterVersionFile = "https://raw.githubusercontent.com/wispborne/NeutrinoDetectorMkII/master/$modId.version"
     val modThreadId = "21140"
+    val modDirectDownloadUrl = "https://github.com/wispborne/NeutrinoDetectorMkII/releases/download/1.4.0/Neutrino-Detector-MkII-1.4.0.zip"
 }
 // Scroll down and change the "dependencies" part of mod_info.json, if needed
 // LazyLib is needed to use Kotlin, as it provides the Kotlin Runtime
@@ -137,6 +138,7 @@ tasks {
                         "masterVersionFile":"${Variables.masterVersionFile}",
                         "modName":"${Variables.modName}",
                         "modThreadId":${Variables.modThreadId},
+                        "directDownloadURL": ${Variables.modDirectDownloadUrl},
                         "modVersion":
                         {
                             "major":${versionObject._1},

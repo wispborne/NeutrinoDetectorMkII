@@ -44,4 +44,4 @@ Written for IntelliJ Community. Latest version is 2021.1 as of writing.
 
 Author: Wispborne (Wisp#0302 on the Unofficial Starsector Discord)
 
-License: [Unlicense](https://github.com/davidwhitman/starsector-mod-template/blob/master/LICENSE)
+License: [GPLv3](https://github.com/wispborne/starsector-mod-template/blob/master/LICENSE)

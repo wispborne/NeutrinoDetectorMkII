@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 object Variables {
     val starsectorDirectory = "C:/Program Files (x86)/Fractal Softworks/Starsector"
-    val modVersion = "1.4.0"
+    val modVersion = "1.4.1"
     val jarFileName = "NeutrinoDetectorMkII.jar"
 
     val modId = "wisp_NeutrinoDetectorMkII"
@@ -138,7 +138,7 @@ tasks {
                         "masterVersionFile":"${Variables.masterVersionFile}",
                         "modName":"${Variables.modName}",
                         "modThreadId":${Variables.modThreadId},
-                        "directDownloadURL": ${Variables.modDirectDownloadUrl},
+                        "directDownloadURL": "${Variables.modDirectDownloadUrl}",
                         "modVersion":
                         {
                             "major":${versionObject._1},

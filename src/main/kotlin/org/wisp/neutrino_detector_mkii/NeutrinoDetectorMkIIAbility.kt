@@ -6,14 +6,10 @@ import com.fs.starfarer.api.campaign.econ.CommoditySpecAPI
 import com.fs.starfarer.api.combat.ViewportAPI
 import com.fs.starfarer.api.graphics.SpriteAPI
 import com.fs.starfarer.api.impl.campaign.abilities.BaseToggleAbility
-import com.fs.starfarer.api.impl.campaign.ids.Commodities
 import com.fs.starfarer.api.ui.Alignment
 import com.fs.starfarer.api.ui.TooltipMakerAPI
 import com.fs.starfarer.api.util.Misc
-import org.lazywizard.lazylib.ext.json.getFloat
-import org.lazywizard.lazylib.ext.logging.e
 import org.lwjgl.opengl.GL11
-import java.awt.Color
 import java.util.*
 import kotlin.math.*
 
@@ -22,40 +18,10 @@ import kotlin.math.*
  * Source: com.fs.starfarer.api.impl.campaign.abilities.GraviticScanAbility
  */
 class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
-    companion object {
-        // 15 LY, increased from vanilla 10 LY
-        const val SLIPSTREAM_DETECTION_RANGE = 30000f
-        const val COMMODITY_ID: String = Commodities.VOLATILES
-
-        @Deprecated("Wisp: Use a variable loaded from settings, this is kept for backwards compat")
-        const val COMMODITY_PER_DAY = 1.2
-        const val DETECTABILITY_PERCENT = 50f
-        var commoditiesPerDay: Float? = null
-        private val color = Color(128, 2, 173, 255)
-    }
-
-    init {
-        if (commoditiesPerDay == null) {
-            loadSettings()
-        }
-    }
-
-    private fun loadSettings() {
-        kotlin.runCatching {
-            commoditiesPerDay =
-                Global.getSettings().getMergedJSONForMod("data/config/modSettings.json", "wisp_NeutrinoDetectorMkII")
-                    .getJSONObject("NeutrinoDetectorMkII")
-                    .getFloat("volatilesPerDay")
-        }
-            .onFailure {
-                Global.getLogger(NeutrinoDetectorMkIIAbility::class.java).e({ it.message ?: "" }, it)
-            }
-            .getOrThrow()
-    }
 
     override fun getActivationText(): String? {
         return if (fleet != null && fleet.cargo.getCommodityQuantity(
-                COMMODITY_ID
+                LifecyclePlugin.COMMODITY_ID
             ) <= 0 && !Global.getSettings().isDevMode
         ) null
         else "Neutrino detector Mk.II activated"
@@ -97,15 +63,15 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
 
         var unit = "unit"
 
-        if (commoditiesPerDay != 1f) unit = "units"
+        if (LifecyclePlugin.commoditiesPerDay != 1f) unit = "units"
         val spec = commodity
         unit += " of " + spec.name.toLowerCase()
         tooltip.addPara(
             "Increases the range at which the fleet can be detected by %s and consumes %s $unit per day (%s in cargo).",
             pad,
             highlight,
-            "" + DETECTABILITY_PERCENT.toInt() + "%",
-            "" + Misc.getRoundedValueMaxOneAfterDecimal(commoditiesPerDay!!),
+            "" + LifecyclePlugin.detectabilityPercent.toInt() + "%",
+            "" + Misc.getRoundedValueMaxOneAfterDecimal(LifecyclePlugin.commoditiesPerDay!!),
             Global.getSector().playerFleet.cargo.getCommodityQuantity(spec.id).toInt().toString()
         )
 
@@ -116,7 +82,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
                     + "When the fleet is traversing a slipstream, the detector is overwhelmed and shuts down.",
             pad,
             highlight,
-            "" + (SLIPSTREAM_DETECTION_RANGE / Misc.getUnitsPerLightYear()).roundToInt()
+            "" + (LifecyclePlugin.slipstreamDetectionRange / Misc.getUnitsPerLightYear()).roundToInt()
         )
         if (Misc.isInsideSlipstream(fleet)) {
             tooltip.addPara("Cannot activate while inside slipstream.", bad, pad)
@@ -150,7 +116,11 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         val fleet = fleet ?: return
 
         //if (level < 1) level = 0;
-        fleet.stats.detectedRangeMod.modifyPercent(modId, DETECTABILITY_PERCENT * level, "Gravimetric scan")
+        fleet.stats.detectedRangeMod.modifyPercent(
+            modId,
+            LifecyclePlugin.detectabilityPercent * level,
+            "Gravimetric scan"
+        )
         val days = Global.getSector().clock.convertToDays(amount)
         phaseAngle += days * 360f * 10f
         phaseAngle = Misc.normalizeAngle(phaseAngle)
@@ -160,10 +130,10 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         }
 
         data!!.advance(days)
-        val cost = days * commoditiesPerDay!!
+        val cost = days * LifecyclePlugin.commoditiesPerDay!!
 
-        if (fleet.cargo.getCommodityQuantity(COMMODITY_ID) > 0 || Global.getSettings().isDevMode) {
-            fleet.cargo.removeCommodity(COMMODITY_ID, cost)
+        if (fleet.cargo.getCommodityQuantity(LifecyclePlugin.COMMODITY_ID) > 0 || Global.getSettings().isDevMode) {
+            fleet.cargo.removeCommodity(LifecyclePlugin.COMMODITY_ID, cost)
         } else {
             fleet.addFloatingText(
                 "Out of " + commodity.name.toLowerCase(),
@@ -179,7 +149,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
     }
 
     val commodity: CommoditySpecAPI
-        get() = Global.getSettings().getCommoditySpec(COMMODITY_ID)
+        get() = Global.getSettings().getCommoditySpec(LifecyclePlugin.COMMODITY_ID)
 
     override fun isUsable(): Boolean {
         val fleet = fleet ?: return false
@@ -277,7 +247,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
         val texWidth = texture!!.textureWidth
         val imageWidth = texture!!.width
         // Wisp: Purple color
-        val color = color
+        val color = LifecyclePlugin.color
         //Color color = new Color(255,25,255,155);
         for (iter in 0..1) {
             if (iter == 0) {

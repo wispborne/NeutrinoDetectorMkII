@@ -1,8 +1,9 @@
 #!/bin/sh
 
 ### Edit
-# Your mod name. The version number will be attached to this to form "My-Mod-1.0.0"
-MOD_FOLDER_NAME=Neutrino-Detector-MkII
+# Your mod name. The version number will be attached to this to form "My-Mod"
+MOD_FOLDER_NAME="Neutrino-Detector-MkII"
+echo "Folder name will be $MOD_FOLDER_NAME"
 ###
 
 

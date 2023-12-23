@@ -12,3 +12,7 @@ DO_NOT_USE
 banner.png$
 starfarer/
 ^.run/
+media/
+^release_checklist.md$
+docs/
+dokka/

@@ -1,5 +1,13 @@
 {
   "NeutrinoDetectorMkII": {
-    "volatilesPerDay": 1.8
+    "slipstreamDetectionRange": 30000,
+    "volatilesPerDay": 1.8,
+    "detectabilityPercent": 50,
+    "color": [
+      128,
+      2,
+      173,
+      255
+    ]
   }
 }

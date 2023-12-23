@@ -7,8 +7,6 @@ import com.fs.starfarer.api.impl.campaign.velfield.SlipstreamTerrainPlugin2
 import com.fs.starfarer.api.impl.campaign.velfield.SlipstreamTerrainPlugin2.SlipstreamSegment
 import com.fs.starfarer.api.util.IntervalUtil
 import com.fs.starfarer.api.util.Misc
-import org.lwjgl.util.vector.Vector2f
-import org.wisp.neutrino_detector_mkii.NeutrinoDetectorMkIIAbility.Companion.SLIPSTREAM_DETECTION_RANGE
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -228,7 +226,7 @@ class NeutrinoDetectorMkIIData     //private IntervalUtil specialInterval = new 
         val fleet = ability.fleet
         val loc = fleet.location
         val location = fleet.containingLocation
-        val range = SLIPSTREAM_DETECTION_RANGE
+        val range = LifecyclePlugin.slipstreamDetectionRange
         if (Misc.isInsideSlipstream(fleet)) return
         for (ter in location.terrainCopy) {
             if (ter.plugin is SlipstreamTerrainPlugin2) {

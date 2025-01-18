@@ -2,7 +2,7 @@
     "masterVersionFile":"https://raw.githubusercontent.com/wispborne/NeutrinoDetectorMkII/master/wisp_NeutrinoDetectorMkII.version",
     "modName":"Neutrino Detector Mk.II",
     "modThreadId":21140,
-    "directDownloadURL": "https://github.com/wispborne/NeutrinoDetectorMkII/releases/download/latest/Neutrino-Detector-MkII.zip",
+    "directDownloadURL": "https://github.com/wispborne/NeutrinoDetectorMkII/releases/latest/download/Neutrino-Detector-MkII.zip",
     "modVersion":
     {
         "major":1,

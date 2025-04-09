@@ -65,7 +65,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
 
         if (LifecyclePlugin.commoditiesPerDay != 1f) unit = "units"
         val spec = commodity
-        unit += " of " + spec.name.toLowerCase()
+        unit += " of " + spec.name.lowercase()
         tooltip.addPara(
             "Increases the range at which the fleet can be detected by %s and consumes %s $unit per day (%s in cargo).",
             pad,
@@ -136,7 +136,7 @@ class NeutrinoDetectorMkIIAbility : BaseToggleAbility() {
             fleet.cargo.removeCommodity(LifecyclePlugin.COMMODITY_ID, cost)
         } else {
             fleet.addFloatingText(
-                "Out of " + commodity.name.toLowerCase(),
+                "Out of " + commodity.name.lowercase(),
                 Misc.setAlpha(entity.indicatorColor, 255),
                 0.5f
             )

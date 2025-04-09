@@ -1,5 +1,10 @@
 # Changelog
 
+1.4.4
+- 0.98a recompile
+
+*some time passes*
+
 1.2.0 (2021-05-01) - Save Compatible
 - Bigger, more obvious spikes
 - Darker purple (easier to see on some light Unknown Skies backgrounds)
